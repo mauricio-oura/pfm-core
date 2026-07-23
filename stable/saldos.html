@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Saldos">
+  <meta name="theme-color" content="#b45309">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Atualizar Saldos — Painel Financeiro</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; min-height: 100vh; padding: 16px; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 24px 20px; width: 100%; max-width: 480px; margin: 8px auto; }
+    .titulo { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    .subtitulo { font-size: 0.78rem; color: #94a3b8; margin-bottom: 20px; }
+    .label { font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 6px; display: block; }
+    select, input[type=number], input[type=text] {
+      width: 100%; padding: 11px 12px; border: 1.5px solid #e2e8f0;
+      border-radius: 10px; font-size: 0.9rem; outline: none;
+      transition: border-color 0.15s; background: white;
+    }
+    select:focus, input:focus { border-color: #0891b2; box-shadow: 0 0 0 3px rgba(8,145,178,0.1); }
+    input.erro, select.erro { border-color: #dc2626; }
+    .saldo-atual {
+      margin-top: 8px; padding: 10px 12px;
+      background: #f0f9ff; border: 1px solid #bae6fd;
+      border-radius: 8px; font-size: 0.85rem; color: #0369a1;
+      display: none;
+    }
+    .btn-enviar {
+      width: 100%; margin-top: 18px; padding: 14px;
+      font-size: 1rem; font-weight: 700; border-radius: 10px;
+      background: #0891b2; color: white; border: none;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-enviar:hover    { background: #0e7490; }
+    .btn-enviar:disabled { background: #a5f3fc; cursor: not-allowed; }
+    .feedback {
+      margin-top: 12px; padding: 12px 16px; border-radius: 10px;
+      font-size: 0.85rem; font-weight: 500; display: none;
+    }
+    .feedback.ok   { background: #f0fdf4; border: 1px solid #86efac; color: #15803d; }
+    .feedback.erro { background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; }
+    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+    .tabela-saldos { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .tabela-saldos th { background: #1e293b; color: white; padding: 8px 10px; text-align: left; }
+    .tabela-saldos td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; }
+    .tabela-saldos tr:hover td { background: #f8fafc; }
+    .pos { color: #15803d; font-weight: 700; }
+    .neg { color: #dc2626; font-weight: 700; }
+  </style>
+  <style>
+    .bc { display:flex; align-items:center; gap:6px; font-size:0.72rem;
+          color:#94a3b8; padding:6px 16px; background:#f8fafc;
+          border-bottom:1px solid #e2e8f0; }
+    .bc-sep { color:#cbd5e1; }
+    .bc-atual { color:#1e293b; font-weight:600; }
+  </style>
+</head>
+<script>
+(function(){
+  var b='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAM2ElEQVR42u2deXCTZR7Hv0mao21Ck96HbS3QFlqKHCKXXB4gyDhyLXKMg6yuw4rLDLs46u4IwrrsiLiOB+uqoyK6RVd0RVA5FcZFoEIvpFBKCy090zNtmubeP+rKooXmfZukTd7vZ6b/pHny5nmf3+f5/Z7kfd7I0M/sWRDqBpEsc3dZZP15fBkDnkhZCBmDnkhZBhkDn0hZBBkDn0hZBBkDn0hZBBkDn0hZBDmDnwQq3og9OYOfSFkCGQOfSLkkkjP4iZSzgZzBT6QsgZzBT6QsgZzBT6QsgZynikgZubdMIiQQs4CcwU+kLIGcwU+kLAHXAIRrAM7+RKpZgBmAMANw9idSzQLMAIQZgLM/kWoWYAYgzACc/YlUswAzAGEGIETSArD8IVItg5gBCDMAIRSAEAkiY/1PmAEIoQCEUABCKAAhFIAQCkAIBSCEAhBCAQihAIRQAEIoACEUgBAKQAgFIIQCEEIBCKEAhFAAQigAIRSAEApACAUghAIQQgEIoQCEUABCKAAhFIAQCkCIfwjhKQhuJm7cj8is2695zGk146tlMTw5zACEApDgRibjOQj2Eij5zhUYuWqbd1/U7YbLYYPLaYejsx32jhZYW+tgMVbCXFsGU0URWi+egr2jhQJQgOCcOeVKNeRKNUI0WmgiE6BLyfqZIy6YygtQd/JzVB/NhcVYOfC6AQrAEshnjsgRMWQMMpesx4xtZzFm7Q5okzKZASiANGVImLQAU7aewND5TwycwKMAFMCvJzREhcylGzB6zTuQyRUsgbgGkCaJt/8KdnMbzry5xi/HU4brYRg2Afr0cQiNuglqQwLUhnhokzJ+8VyFOhyz3m+AzdQIW5sR1tZ6WIxVsBgvo9NYic7aMnTUlMFl76IARDypsx6BMX8f6r//wievrxoUjeQ7VyBpymLokrMElTshGi1CNFqExd7c4//dbhcsDZfRceUc2srzu/8u5qOruYYCEM8Z/uBmNJzeB7fL6bXXVOvjMGz5JiROXgS5Uu2zNU1YXBrC4tIQO3b2T4/vWx4LR1cH1wDEM8IT0xE7Zpb3SqspizHtpdO4afpynwU/F8HE6+sBL0zJyF65FaPXvAOl1sCTyhKo73yzOgfmuou/nBWUGoSEahEWm4pBabcgfsL9iBl5p+iPFKOyp/b5vQ5btgk3z1nFiKUAvsdl74LN3gWbqRGtZadQeeBtRA6fjLHrcqEaFC28ZjfEQ62PhbW1QdT7iR17D4bcv5YDwxKo/2gu+Q/y/roQcLtFtQ+9zqctvVY+CiVG/PpvHABmgP6ntfQkGk7vQ+zYewS3VYZHiFw/LEJobKqgNsbCg6j99mO0VeQj5zevQJ9x2zX/d1rNOPjwYKgiYqAeFAO1IQ7apGHQpWRBl5INbVImZIoQCkB6Cq4DogRQKDWijpc09QGPn+u0mnH6xQfRcOrLq485rD0+12Fph8PSjs668h8f2X01KDRaGIZPQnTOdETnzMCgtFsoAOnmasAIw2ER/tm5PESFqJ/t5roRRdt+e03wi8XR1QFj/n4Y8/cDAMLi0pA4eSESJi2EW2QJSAGCBDGBDAB2c6vgNtqkDMg9zBzW1gbUHPvYN9LXV6Dsky0o+2QLF8GSXzSFDRLeyO1GZ32F8IVzTIrHz7U0VopeoEsZCiCQ8IShgtuY6y6KygAhoZ7Lpo6I5eBQAN8j5rKGpjNHRR3L7XIIyhYRQ8ZwgCiA74jKnorokXcIbld1eLuo49lMTYKef8tjb4j6oo4CkN6DP2c6xq7LFdyu5dx3aL2QJ1IAo6Dn61KyMPXFPKTd+xjU+jgOmidlJk9BD7PCjxvhw+LSEDF4FOInzkN0zgzhJYzT0acNMR3VpXBaO6FQh3m+FtDHIeuhLcha8Tw6jZeh0kVyQClAz0x/tdinr392+5MwXT4jur3LYUNzyTHEjLpLeGOZ7LqbXRSqMEzefASmS0UwXSpGW0UBTOUFcDlsFIB4h9KPnsOlL/p+r6K645+KE6AXOfTp46BPH3dVNrsVrRfyYCw4iPrv96C98qwkxkm2Z0FowH947JMbY4nEYWlH0bZVqP3uE+8MkEKJGa8UCb4eqK+0V5Wg8sBbuHJ4R1DtAOMi2Ee4XU5UHd6OI2tGey34u9cRdpS8/ye/90eXPBzZK7dixt9LkHbvYwPiDhcsgQYgXU3VuHLkA1Qdfk/0dUK9UXtsFy6kZCF94VN+759KF4Wsh7YgcfIinHphadBtimcG8EKJogw3+Pz+O6U7N6H8s/7bF6DPuA2TnjsMtT6WApCrqPWxSJ31CKa9XIDMJet9eh19yY4/Im/z/H67B2loTApufeIjjy/QCwQUS7OUGwK9ExGDRyFu3L39mwlkckRm3Q790LGoO7kbbqfdJ8cx15bh8v43YWtrgDYx3e8b5DVRSXBazWg5d4wZgPySmNEzMWbtDp8uGl12Ky59+Tq+eXwkjj87B1WH3oW1td5vfRx83xqEaLTMAMwAPROemA55iAqNxV/7+EhuWBouof77vSj//GXUn/wc5urzsHe2Qa5UQ6U1+OTmuAp1GDrrK2CqKAh4AXhblP+7LYpcqYFSq4cuOQsxo+7CTdOWQRUh7re0Bt+/FsaCg2j64ah/OuN2//jNbhGw97XuwQ3VYfz6L6AfOtbrh4seMQ1Vh95lCRRMuOxdsLbUobHoMEreexpfrx6BygNvi14T5Dz6CuQhqn7rj8PSDqets8d+nt66HKUf/hlNxd+Ium1j1IhpQTHm/B6glwAq/sdq2Nobu+/5L6IUSpv7OC7+e+uA6pfb5fzpy7oL6P50J3vlVkFlpNoQD4UqFE6bhRkg2Dn/zw2oO/GZqLZD5v0BynD9gO6fxViJU88vRmPhIUHtlEFwpSkF8JDi11fD1mYU3E4ZHoEh834/4PvndrtQ+q+/CGqjogDSwdbehPO5G0S1vXn2qoD4BrX1Qp7AjfUyCiAlqg5tF3WZsEIdhiHz1g38LOB0wCngV2EclnYKICXcbhdKP9woqm3qzIehiUoS1CZm1F0Ys3YHIodP9kv/VLpIKFShHp+LrqZqCiA16k7sRlt5vvATrVQjfeGTgtrIFEokTFqAiZsOYMrWk0i5e6VPL30Q8jsGHVXngmIHGQUQQelOcVkg+Y4Hr7tNsTcGpY5AzqOv4u63KzHh2a+QNne16NfqCUPGeGQu8XyN01h0OCjGkt8DiKDh9D60lJ6AIWO84Bk9fdFTKHztUdHHlskViMqeiqjsqcha8Ty6mmtgqihEW3k+TBWFMNeWwWpqhL29+YZfcMmVGqgjoqFLzUHCpPlImvKAoOuXqo/mUgBJZ4HcjRi/fq/gdknTlqLs0xdgrrnglfehiUyEJjLxmh+y+1+Nbu9oQYgmvIdFeThm5zaLPmZj4SFRZSBLoCCisfhrUdf5yOQKZCz2/RZHmUwOlS7K69fuu+xW/PDOuqAZRwrQxywghoRJC6BLyQrIPhe/vhodV85RAAI0nzsGY8FBUbNzxuJnAqqvbrcLZ974Ha4c+SCoxpAC9DUL7HxWVLv48fchYvDogOijpfEKTmyYg8v73wq68aMAfaS17BTq8/aKapu5ZP0N/2/M34/vnpmJ8t0vwVxT6ve+2dqbcH7nRhxZM8p/+xr8DD8F8kYW+HAj4m6dI3j3VczomTBkTkDL+eM9lx0uJ5rPfovms9+i5L2nER4/pHvfccZtMGSMhzZ5GGQy785hDks7ms4cQc2xXag/sTvgL3emAH7AdKkYtcc/RcLE+aKywPENsz16rrnuIsx1F3+63XpIqA7apAyEJQxFeMJQhMcPhsaQAKUuEkqtAUqt4bp7d7uaa2EzNaKrqRqd9RVorzoLU0UB2ioK4XY6JDN2QXFrRHJ9Jm8+cs09QIHuX5P8alkMTw7XABKAvxtGASQd/6AAFIAQCsASiFAACkAoANcAhAIQQgFYAlEAQgEoAOEaQJrwUgjCDEAIBSCEAhBCAQihAIRQAEIoACEUgBAKQAgFIIQCEEIBCKEAhFAAQigAIRSAEApACAUghAIQQgEIoQCEUABCKAAhFIAQCkAIBSCEAhBCAQihAIRQAEL8JcDcXRYZTwORInN3WWTMAIQlECEUgBCpCsB1AJFi/c8MQJgBeAoIBWAZRCRY/jADEGaA65lBSLDP/swAhBmgN0MICdbZnxmAMAN4agohwTb7MwMQZgChxhASLLN/rxmAEpBgDn6PSiBKQII1+LkGIFwDeMskQgJt9heUASgBCbbgF1wCUQISTMEvag1ACUiwBD8A9CmY9ywIdfO0k0AMfNEZgNmABEvw91kASkACOfj7XAKxJCKBGvg+EYAikEAJfJ8KQBHIQA98vwhAEchAX1/6fQFLGUh/B32/CkAhSH8G/M/5L91YSOv7rl5tAAAAAElFTkSuQmCC';
+  var li=document.createElement('link');li.rel='icon';li.type='image/png';li.href=b;document.head.appendChild(li);
+  var la=document.createElement('link');la.rel='apple-touch-icon';la.href=b;document.head.appendChild(la);
+})();
+</script>
+<body>
+  <div class="bc">
+    <span>🏦 Painel Financeiro</span>
+    <span class="bc-sep">›</span>
+    <span class="bc-atual">Saldos</span>
+  </div>
+<div class="card">
+  <div class="titulo">💰 Atualizar Saldo</div>
+  <div class="subtitulo">👤 <?= emailUsuario ?></div>
+
+  <label class="label">Conta *</label>
+  <select id="conta" onchange="mostrarSaldoAtual()">
+    <option value="">Selecionar...</option>
+  </select>
+  <div class="saldo-atual" id="saldo-atual"></div>
+
+  <label class="label">Novo Saldo (R$) *</label>
+  <input type="number" id="novo-saldo" placeholder="0,00" step="0.01">
+
+  <button class="btn-enviar" id="btn-enviar" onclick="enviar()">💾 Atualizar Saldo</button>
+  <div class="feedback" id="feedback"></div>
+
+  <hr class="divider">
+  <div style="font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Saldos Atuais</div>
+  <table class="tabela-saldos">
+    <thead><tr><th>Conta</th><th>Descrição</th><th>Atualizado em</th><th>Saldo</th></tr></thead>
+    <tbody id="tabela-body"><tr><td colspan="3" style="color:#94a3b8;">Carregando...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+var SALDOS = [];
+
+// Carrega saldos ao abrir
+google.script.run
+  .withSuccessHandler(function(dados) {
+    SALDOS = dados || [];
+    var sel = document.getElementById('conta');
+    SALDOS.forEach(function(s) {
+      var opt = document.createElement('option');
+      opt.value = s.conta;
+      opt.textContent = s.descricao + ' (' + s.conta + ')';
+      opt.dataset.saldo = s.saldo;
+      opt.dataset.data  = s.dataAtual || '';
+      sel.appendChild(opt);
+    });
+    renderTabela();
+  })
+  .withFailureHandler(function(e) { console.error(e); })
+  .getSaldos();
+
+function renderTabela() {
+  var tbody = document.getElementById('tabela-body');
+  if (!SALDOS.length) { tbody.innerHTML = '<tr><td colspan="3" style="color:#94a3b8;">Nenhum saldo cadastrado</td></tr>'; return; }
+  tbody.innerHTML = SALDOS.map(function(s) {
+    var cls = s.saldo >= 0 ? 'pos' : 'neg';
+    return '<tr><td>' + s.conta + '</td><td>' + s.descricao + '</td><td style="color:#94a3b8;font-size:0.8rem;">' + (s.dataAtual || '—') + '</td><td class="' + cls + '">' + moeda(s.saldo) + '</td></tr>';
+  }).join('');
+}
+
+function mostrarSaldoAtual() {
+  var sel = document.getElementById('conta');
+  var opt = sel.options[sel.selectedIndex];
+  var div = document.getElementById('saldo-atual');
+  if (!opt || !opt.value) { div.style.display = 'none'; return; }
+  var saldo = parseFloat(opt.dataset.saldo) || 0;
+  var data  = opt.dataset.data || '';
+  div.textContent = 'Saldo atual: ' + moeda(saldo) + (data ? ' (atualizado em ' + data + ')' : '');
+  div.style.display = 'block';
+}
+
+function fb(msg, tipo) {
+  var el = document.getElementById('feedback');
+  el.textContent = msg; el.className = 'feedback ' + tipo; el.style.display = 'block';
+  if (tipo === 'ok') setTimeout(function(){ el.style.display = 'none'; }, 3000);
+}
+
+function enviar() {
+  var conta    = document.getElementById('conta').value;
+  var novoSaldo = parseFloat(document.getElementById('novo-saldo').value);
+
+  document.getElementById('conta').classList.remove('erro');
+  document.getElementById('novo-saldo').classList.remove('erro');
+
+  if (!conta)              { document.getElementById('conta').classList.add('erro');      fb('Selecione a conta.', 'erro'); return; }
+  if (isNaN(novoSaldo))    { document.getElementById('novo-saldo').classList.add('erro'); fb('Informe o novo saldo.', 'erro'); return; }
+
+  var btn = document.getElementById('btn-enviar');
+  btn.disabled = true; btn.textContent = '⏳ Atualizando...';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false; btn.textContent = '💾 Atualizar Saldo';
+      if (res && res.ok) {
+        var hoje = new Date().toLocaleDateString('pt-BR');
+        fb('✅ Saldo de ' + conta + ' atualizado para ' + moeda(novoSaldo), 'ok');
+        SALDOS = SALDOS.map(function(s) {
+          return s.conta === conta ? Object.assign({}, s, { saldo: novoSaldo, dataAtual: hoje }) : s;
+        });
+        renderTabela();
+        var opt = document.getElementById('conta').options[document.getElementById('conta').selectedIndex];
+        if (opt) opt.dataset.saldo = novoSaldo;
+        mostrarSaldoAtual();
+        document.getElementById('novo-saldo').value = '';
+      } else {
+        fb('❌ ' + (res ? res.erro : 'Erro desconhecido'), 'erro');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = '💾 Atualizar Saldo';
+      fb('❌ Erro: ' + err.message, 'erro');
+    })
+    .atualizarSaldo({ conta: conta, novoSaldo: novoSaldo });
+}
+
+function moeda(v) { return (v||0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' }); }
+</script>
+</body>
+</html>
+

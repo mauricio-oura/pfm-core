@@ -1,0 +1,323 @@
+{
+  "timeZone": "America/Sao_Paulo",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "sheets": {
+    "macros": [
+      {
+        "menuName": "Classificar_cartao",
+        "functionName": "Classificar_cartao"
+      },
+      {
+        "menuName": "CopiaFormulas",
+        "functionName": "CopiaFormulas"
+      },
+      {
+        "menuName": "copiaFormulas",
+        "functionName": "copiaFormulas"
+      },
+      {
+        "menuName": "replicarFormulas",
+        "functionName": "replicarFormulas"
+      },
+      {
+        "menuName": "addRow",
+        "functionName": "addRow"
+      },
+      {
+        "menuName": "teste row",
+        "functionName": "testerow"
+      },
+      {
+        "menuName": "teste row 1",
+        "functionName": "testerow1"
+      },
+      {
+        "menuName": "recuperarFormulas",
+        "functionName": "recuperarFormulas"
+      },
+      {
+        "menuName": "sinal",
+        "functionName": "sinal"
+      },
+      {
+        "menuName": "numLinha",
+        "functionName": "numLinha"
+      },
+      {
+        "menuName": "teste",
+        "functionName": "teste4"
+      },
+      {
+        "menuName": "lancar_despesa_cartao",
+        "functionName": "lancar_despesa_cartao"
+      },
+      {
+        "menuName": "reload",
+        "functionName": "reload"
+      },
+      {
+        "menuName": "openForm",
+        "functionName": "openForm"
+      },
+      {
+        "menuName": "Inserir_registro",
+        "functionName": "Inserir_registro"
+      },
+      {
+        "menuName": "testecopiarcolar",
+        "functionName": "testecopiarcolar"
+      },
+      {
+        "menuName": "teste deletar",
+        "functionName": "testedeletar"
+      },
+      {
+        "menuName": "teste deletar 1",
+        "functionName": "testedeletar1"
+      },
+      {
+        "menuName": "teste copia colar formulas",
+        "functionName": "testecopiacolarformulas"
+      },
+      {
+        "menuName": "Testecopiaformulas",
+        "functionName": "Testecopiaformulas"
+      },
+      {
+        "menuName": "testez",
+        "functionName": "testez"
+      },
+      {
+        "menuName": "tes",
+        "functionName": "tes"
+      },
+      {
+        "menuName": "tes2",
+        "functionName": "tes2"
+      },
+      {
+        "menuName": "test",
+        "functionName": "test"
+      },
+      {
+        "menuName": "F",
+        "functionName": "F"
+      },
+      {
+        "menuName": "Fabsoluto",
+        "functionName": "Fabsoluto"
+      },
+      {
+        "menuName": "f",
+        "functionName": "f"
+      },
+      {
+        "menuName": "f 1",
+        "functionName": "f1"
+      },
+      {
+        "menuName": "TESTEW",
+        "functionName": "TESTEW"
+      },
+      {
+        "menuName": "TESTE",
+        "functionName": "TESTE"
+      },
+      {
+        "menuName": "InserirLinha_Cartao",
+        "functionName": "InserirLinha_Cartao"
+      },
+      {
+        "menuName": "InserirLinha_Cartao 1",
+        "functionName": "InserirLinha_Cartao1"
+      },
+      {
+        "menuName": "teste1",
+        "functionName": "teste11"
+      },
+      {
+        "menuName": "ForcarUpdate_BD",
+        "functionName": "ForcarUpdate_BD"
+      },
+      {
+        "menuName": "matriz",
+        "functionName": "matriz"
+      },
+      {
+        "menuName": "matrix",
+        "functionName": "matrix"
+      },
+      {
+        "menuName": "Macro sem título",
+        "functionName": "myFunction"
+      },
+      {
+        "menuName": "data_venc_base",
+        "functionName": "data_venc_base"
+      },
+      {
+        "menuName": "teste",
+        "functionName": "teste2"
+      },
+      {
+        "menuName": "copiar12linhas",
+        "functionName": "copiar12linhas"
+      },
+      {
+        "menuName": "TESTE 1",
+        "functionName": "TESTE1"
+      },
+      {
+        "menuName": "DATAS",
+        "functionName": "DATAS"
+      },
+      {
+        "menuName": "colar_data",
+        "functionName": "colar_data"
+      },
+      {
+        "menuName": "copiar_intervalo",
+        "functionName": "copiar_intervalo"
+      },
+      {
+        "menuName": "colar_intervaloDatas",
+        "functionName": "colar_intervaloDatas"
+      },
+      {
+        "menuName": "colar",
+        "functionName": "colar"
+      },
+      {
+        "menuName": "copiar",
+        "functionName": "copiar"
+      },
+      {
+        "menuName": "colar_teste",
+        "functionName": "colar_teste"
+      },
+      {
+        "menuName": "fixarData",
+        "functionName": "fixarData"
+      },
+      {
+        "menuName": "fixarteste",
+        "functionName": "fixarteste"
+      },
+      {
+        "menuName": "fixar data",
+        "functionName": "fixardata"
+      },
+      {
+        "menuName": "fixar",
+        "functionName": "fixar"
+      },
+      {
+        "menuName": "fixar1",
+        "functionName": "fixar1"
+      },
+      {
+        "menuName": "limpar",
+        "functionName": "limpar"
+      },
+      {
+        "menuName": "dragDownTotals",
+        "functionName": "dragDownTotals"
+      },
+      {
+        "menuName": "teste12meses",
+        "functionName": "teste12meses"
+      },
+      {
+        "menuName": "teste12",
+        "functionName": "teste12"
+      },
+      {
+        "menuName": "ajuste12",
+        "functionName": "ajuste12"
+      },
+      {
+        "menuName": "ajustar12",
+        "functionName": "ajustar12"
+      },
+      {
+        "menuName": "copiarLinhaCartao",
+        "functionName": "copiarLinhaCartao"
+      },
+      {
+        "menuName": "PROHETAR",
+        "functionName": "PROHETAR"
+      },
+      {
+        "menuName": "PROJETAR",
+        "functionName": "PROJETAR"
+      },
+      {
+        "menuName": "PROJETAR1",
+        "functionName": "PROJETAR1"
+      },
+      {
+        "menuName": "fixar_data",
+        "functionName": "fixar_data"
+      },
+      {
+        "menuName": "alterar",
+        "functionName": "alterar"
+      },
+      {
+        "menuName": "abrirForm_BD",
+        "functionName": "abrirForm_BD"
+      },
+      {
+        "menuName": "Macro sem título 1",
+        "functionName": "myFunction1"
+      },
+      {
+        "menuName": "Macro sem título 2",
+        "functionName": "myFunction2"
+      },
+      {
+        "menuName": "Macro sem título 3",
+        "functionName": "myFunction3"
+      },
+      {
+        "menuName": "Macro sem título 4",
+        "functionName": "myFunction4"
+      },
+      {
+        "menuName": "Macro sem título 5",
+        "functionName": "myFunction5"
+      },
+      {
+        "menuName": "Macro sem título 6",
+        "functionName": "myFunction6"
+      },
+      {
+        "menuName": "Macro sem título 7",
+        "functionName": "myFunction7"
+      },
+      {
+        "menuName": "credito_parceladoAtual",
+        "functionName": "credito_parceladoAtual",
+        "defaultShortcut": "Ctrl+Alt+Shift+2"
+      },
+      {
+        "menuName": "parceladoMensal",
+        "functionName": "parceladoMensal"
+      },
+      {
+        "menuName": "parceladoAnual",
+        "functionName": "parceladoAnual"
+      },
+      {
+        "menuName": "triggerLancamentos",
+        "functionName": "triggerLancamentos"
+      }
+    ]
+  },
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE"
+  }
+}

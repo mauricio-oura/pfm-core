@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajuste de Fatura</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .bc { display:flex;align-items:center;gap:6px;font-size:0.72rem;
+          color:#94a3b8;padding:6px 16px;background:#f8fafc;
+          border-bottom:1px solid #e2e8f0; }
+    .bc-sep { color:#cbd5e1; }
+    .bc-atual { color:#1e293b;font-weight:600; }
+    .card-fatura { border-radius:12px;padding:14px 16px;margin-bottom:10px;
+                   border:1.5px solid #e2e8f0;background:white;cursor:pointer;
+                   transition:border-color 0.15s,box-shadow 0.15s; }
+    .card-fatura:hover { border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.1); }
+    .card-fatura.selecionado { border-color:#6366f1;background:#f5f3ff; }
+    .tag-status { font-size:0.65rem;font-weight:700;padding:2px 8px;
+                  border-radius:99px;display:inline-block; }
+    .tag-pendente { background:#fde68a;color:#92400e; }
+    .tag-ajustado { background:#bbf7d0;color:#14532d; }
+    .diff-pos { color:#15803d;font-weight:700; }
+    .diff-neg { color:#dc2626;font-weight:700; }
+  </style>
+</head>
+<body class="bg-light p-3">
+  <div class="bc">
+    <span>🏦 <?= appNome ?></span>
+    <span class="bc-sep">›</span>
+    <span class="bc-atual">Ajuste de Fatura</span>
+  </div>
+
+  <div class="d-flex align-items-center gap-2 mb-1 mt-2">
+    <span style="font-size:1.6rem;">⚖️</span>
+    <h5 class="fw-bold mb-0">Ajuste de Fatura</h5>
+    <span class="badge rounded-pill text-bg-dark ms-1">Cartão</span>
+  </div>
+  <p class="text-muted small mb-3">Informe o valor fechado da fatura para lançar o ajuste</p>
+
+  <!-- Loading -->
+  <div id="loading" class="text-center py-4 text-muted">
+    <div class="spinner-border spinner-border-sm me-2"></div> Carregando faturas...
+  </div>
+
+  <!-- Passo 1: Selecionar fatura -->
+  <div id="passo1" style="display:none;">
+    <div class="mb-3">
+      <label class="form-label fw-semibold text-muted small text-uppercase" style="letter-spacing:0.05em;">
+        Selecione a fatura
+      </label>
+      <div id="lista-faturas"></div>
+    </div>
+  </div>
+
+  <!-- Passo 2: Informar valor real -->
+  <div id="passo2" style="display:none;">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <div class="fw-bold" id="p2-nome"></div>
+            <div class="text-muted small" id="p2-mes"></div>
+          </div>
+          <span class="tag-status" id="p2-status-tag"></span>
+        </div>
+
+        <div class="row g-2 mb-3 text-center">
+          <div class="col-6">
+            <div style="background:#f8fafc;border-radius:8px;padding:10px;">
+              <div class="text-muted small">Calculado</div>
+              <div class="fw-bold text-danger fs-6" id="p2-calc">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div style="background:#f8fafc;border-radius:8px;padding:10px;">
+              <div class="text-muted small">Ajustado anterior</div>
+              <div class="fw-bold fs-6" id="p2-ajust">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Valor real da fatura (R$) *</label>
+          <input type="number" class="form-control form-control-lg" id="valor-real"
+                 placeholder="0,00" step="0.01" min="0.01" oninput="calcularDiff()">
+          <div class="form-text">Informe o valor total a ser pago (positivo)</div>
+        </div>
+
+        <div id="preview-diff" class="alert d-none mb-3" style="border-radius:10px;"></div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Data de vencimento (opcional)</label>
+          <input type="date" class="form-control" id="data-venc">
+          <div class="form-text">Se informada, usa como data do lançamento de ajuste</div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary flex-shrink-0" onclick="voltar()">← Voltar</button>
+          <button class="btn btn-dark w-100 fw-bold" id="btn-ajustar" onclick="confirmarAjuste()">
+            ⚖️ Confirmar Ajuste
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="feedback" class="alert d-none mt-2"></div>
+
+  <!-- Histórico da sessão -->
+  <div id="historico-wrap" style="display:none;" class="mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="fw-semibold text-muted small">AJUSTES DESTA SESSÃO</span>
+      <button class="btn btn-sm btn-outline-secondary" onclick="limparHistorico()">Limpar</button>
+    </div>
+    <div id="historico-lista"></div>
+  </div>
+
+<script>
+var FATURAS    = <?!= JSON.stringify(faturasLista || []) ?>;
+var SELECIONADA = null;
+var HISTORICO  = [];
+
+window.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('passo1').style.display  = 'block';
+  renderFaturas(FATURAS);
+});
+
+function moeda(v) {
+  return (v || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+
+function renderFaturas(lista) {
+  var div = document.getElementById('lista-faturas');
+  if (!lista.length) {
+    div.innerHTML = '<div class="alert alert-info">Nenhuma fatura encontrada. Execute "Sincronizar Faturas" primeiro.</div>';
+    return;
+  }
+  div.innerHTML = lista.map(function(f, i) {
+    var tagCls  = f.status === 'ajustado' ? 'tag-ajustado' : 'tag-pendente';
+    var tagTxt  = f.status === 'ajustado' ? '✓ Ajustado' : '⏳ Pendente';
+    var valEfet = f.valorAjustado || f.valorCalculado;
+    return '<div class="card-fatura" onclick="selecionar(' + i + ', this)">' +
+      '<div class="d-flex justify-content-between align-items-start">' +
+        '<div>' +
+          '<div class="fw-semibold">' + f.nome + '</div>' +
+          '<div class="text-muted small">' + f.mesAno + '</div>' +
+        '</div>' +
+        '<div class="text-end">' +
+          '<div class="fw-bold text-danger">' + moeda(Math.abs(valEfet)) + '</div>' +
+          '<span class="tag-status ' + tagCls + '">' + tagTxt + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function selecionar(idx, el) {
+  SELECIONADA = FATURAS[idx];
+  document.querySelectorAll('.card-fatura').forEach(function(c){ c.classList.remove('selecionado'); });
+  if (el) el.classList.add('selecionado');
+
+  // Preencher passo2
+  document.getElementById('p2-nome').textContent = SELECIONADA.nome;
+  document.getElementById('p2-mes').textContent  = SELECIONADA.mesAno;
+  var tagEl = document.getElementById('p2-status-tag');
+  tagEl.textContent  = SELECIONADA.status === 'ajustado' ? '✓ Ajustado' : '⏳ Pendente';
+  tagEl.className    = 'tag-status ' + (SELECIONADA.status === 'ajustado' ? 'tag-ajustado' : 'tag-pendente');
+  document.getElementById('p2-calc').textContent =
+    moeda(Math.abs(SELECIONADA.valorCalculado));
+  document.getElementById('p2-ajust').textContent =
+    SELECIONADA.valorAjustado
+      ? moeda(Math.abs(SELECIONADA.valorAjustado))
+      : '—';
+  document.getElementById('valor-real').value = '';
+  document.getElementById('data-venc').value  = '';
+  document.getElementById('preview-diff').className = 'alert d-none mb-3';
+
+  // Pré-preencher com valor ajustado anterior se existir
+  if (SELECIONADA.valorAjustado) {
+    document.getElementById('valor-real').value =
+      Math.abs(SELECIONADA.valorAjustado).toFixed(2);
+    calcularDiff();
+  }
+
+  document.getElementById('passo1').style.display = 'none';
+  document.getElementById('passo2').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function calcularDiff() {
+  if (!SELECIONADA) return;
+  var valorReal = parseFloat(document.getElementById('valor-real').value) || 0;
+  var prev      = document.getElementById('preview-diff');
+  if (!valorReal) { prev.className = 'alert d-none mb-3'; return; }
+
+  var calc      = SELECIONADA.valorCalculado; // negativo
+  var realNeg   = -Math.abs(valorReal);
+  var diff      = Math.round((realNeg - calc) * 100) / 100;
+  var diffAbs   = Math.abs(diff);
+  var semDiff   = diffAbs < 0.01;
+
+  if (semDiff) {
+    prev.className = 'alert alert-success mb-3';
+    prev.innerHTML = '✅ Valor igual ao calculado — nenhum ajuste necessário.';
+  } else if (diff < 0) {
+    prev.className = 'alert alert-warning mb-3';
+    prev.innerHTML =
+      '📌 Fatura <strong>R$ ' + diffAbs.toFixed(2).replace('.', ',') +
+      ' maior</strong> que o calculado.<br>' +
+      '<small class="text-muted">Será lançado um ajuste de <span class="diff-neg">-R$ ' +
+      diffAbs.toFixed(2).replace('.', ',') + '</span> na CartaoC.</small>';
+  } else {
+    prev.className = 'alert alert-info mb-3';
+    prev.innerHTML =
+      '📌 Fatura <strong>R$ ' + diffAbs.toFixed(2).replace('.', ',') +
+      ' menor</strong> que o calculado (estorno/crédito).<br>' +
+      '<small class="text-muted">Será lançado um crédito de <span class="diff-pos">+R$ ' +
+      diffAbs.toFixed(2).replace('.', ',') + '</span> na CartaoC.</small>';
+  }
+}
+
+function voltar() {
+  document.getElementById('passo2').style.display = 'none';
+  document.getElementById('passo1').style.display = 'block';
+  SELECIONADA = null;
+  document.getElementById('feedback').className = 'alert d-none';
+}
+
+function confirmarAjuste() {
+  if (!SELECIONADA) return;
+  var valorReal = parseFloat(document.getElementById('valor-real').value) || 0;
+  if (!valorReal || valorReal <= 0) {
+    fb('Informe o valor real da fatura.', 'danger'); return;
+  }
+  var dataVenc = document.getElementById('data-venc').value;
+  var btn = document.getElementById('btn-ajustar');
+  btn.disabled = true; btn.textContent = '⏳ Ajustando...';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false; btn.textContent = '⚖️ Confirmar Ajuste';
+      if (res && res.ok) {
+        var msg = '✅ Ajuste aplicado!';
+        if (res.lancado) {
+          var diffAbs = Math.abs(res.diferenca).toFixed(2).replace('.', ',');
+          msg += ' Diferença de R$ ' + diffAbs + ' lançada na CartaoC.';
+        } else {
+          msg += ' Nenhum ajuste necessário (valores iguais).';
+        }
+        fb(msg, 'success');
+        adicionarHistorico(SELECIONADA.nome, SELECIONADA.mesAno, valorReal, res.diferenca);
+        // Sinalizar para o Dashboard que precisa recarregar
+        try { localStorage.setItem('pf_cache_sujo', Date.now()); } catch(e) {}
+        // Atualizar lista local
+        FATURAS = FATURAS.map(function(f) {
+          if (f.codigo === SELECIONADA.codigo && f.anoMes === SELECIONADA.anoMes) {
+            return Object.assign({}, f, {
+              valorAjustado: -Math.abs(valorReal),
+              valorEfetivo:  -Math.abs(valorReal),
+              status: 'ajustado'
+            });
+          }
+          return f;
+        });
+        document.getElementById('passo2').style.display = 'none';
+        document.getElementById('passo1').style.display = 'block';
+        renderFaturas(FATURAS);
+        SELECIONADA = null;
+      } else {
+        fb('❌ ' + (res ? res.erro : 'Erro desconhecido'), 'danger');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = '⚖️ Confirmar Ajuste';
+      fb('❌ ' + err.message, 'danger');
+    })
+    .ajustarFatura({
+      codigo:    SELECIONADA.codigo,
+      anoMes:    SELECIONADA.anoMes,
+      valorReal: valorReal,
+      dataVenc:  dataVenc || ''
+    });
+}
+
+function fb(msg, tipo) {
+  var el = document.getElementById('feedback');
+  el.innerHTML = msg;
+  el.className = 'alert alert-' + (tipo === 'success' ? 'success' : tipo === 'danger' ? 'danger' : 'info');
+  if (tipo === 'success') setTimeout(function(){ el.className = 'alert d-none'; }, 4000);
+}
+
+function adicionarHistorico(nome, mesAno, valorReal, diferenca) {
+  var hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  HISTORICO.unshift({ nome:nome, mesAno:mesAno, valorReal:valorReal, diferenca:diferenca, hora:hora });
+  if (HISTORICO.length > 5) HISTORICO.pop();
+  renderHistorico();
+}
+
+function renderHistorico() {
+  var wrap  = document.getElementById('historico-wrap');
+  var lista = document.getElementById('historico-lista');
+  if (!HISTORICO.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  lista.innerHTML = HISTORICO.map(function(r) {
+    var diffAbs = Math.abs(r.diferenca || 0);
+    var diffTxt = diffAbs < 0.01 ? 'sem diferença'
+      : (r.diferenca < 0 ? '-' : '+') + 'R$ ' + diffAbs.toFixed(2).replace('.', ',');
+    var diffCls = diffAbs < 0.01 ? 'text-muted' : r.diferenca < 0 ? 'text-danger' : 'text-success';
+    return '<div class="d-flex align-items-center gap-2 p-2 mb-1 bg-white rounded border">' +
+      '<span class="badge bg-dark">⚖️</span>' +
+      '<div class="flex-grow-1">' +
+        '<div class="fw-semibold" style="font-size:0.9rem;">' + r.nome + ' · ' + r.mesAno + '</div>' +
+        '<div class="text-muted" style="font-size:0.78rem;">' +
+          'R$ ' + r.valorReal.toFixed(2).replace('.', ',') +
+          ' · ajuste: <span class="' + diffCls + '">' + diffTxt + '</span>' +
+          ' · ' + r.hora + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function limparHistorico() {
+  HISTORICO = [];
+  document.getElementById('historico-wrap').style.display = 'none';
+}
+</script>
+</body>
+</html>

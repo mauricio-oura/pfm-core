@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Lançar Cartão">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .bc { display:flex; align-items:center; gap:6px; font-size:0.72rem;
+          color:#94a3b8; padding:6px 16px; background:#f8fafc;
+          border-bottom:1px solid #e2e8f0; }
+    .bc-sep { color:#cbd5e1; }
+    .bc-atual { color:#1e293b; font-weight:600; }
+  </style>
+</head>
+
+<?if (acesso) {?>
+<script>
+(function(){
+  var b='data:image/png;base64,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';
+  var li=document.createElement('link');li.rel='icon';li.type='image/png';li.href=b;document.head.appendChild(li);
+  var la=document.createElement('link');la.rel='apple-touch-icon';la.href=b;document.head.appendChild(la);
+})();
+</script>
+<body class="bg-light p-2">
+  <div class="bc">
+    <span>🏦 Painel Financeiro</span>
+    <span class="bc-sep">›</span>
+    <span class="bc-atual">Lançar no Cartão</span>
+  </div>
+
+<div class="text-center mb-2 p-2 rounded" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);color:white;">
+  <div style="font-size:1.3rem;">💳</div>
+  <h5 class="fw-bold mb-0 mt-1" style="font-size:1.05rem;">
+    <?if (cartoes.length === 1) {?>
+    <?= cartoes[0].nome ?>
+    <?} else {?>
+    Lançamento de Cartão
+    <?}?>
+  </h5>
+  <?if (cartoes.length === 1) {?>
+  <div style="font-size:0.78rem;opacity:0.8;">•••• <?= cartoes[0].ultimos ?></div>
+  <?}?>
+</div>
+
+<?if (cartoes.length > 1) {?>
+<div class="mb-2">
+  <label class="form-label fw-semibold mb-1">Cartão *</label>
+  <div class="row g-1">
+  <?for (var i = 0; i < cartoes.length; i++) {?>
+    <div class="col-6">
+    <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start py-2"
+            id="btn-cartao-<?= i ?>" onclick="selCartao(<?= i ?>, '<?= cartoes[i].codigo ?>', '<?= cartoes[i].nome ?>')" style="font-size:0.78rem;line-height:1.2;">
+      <?= cartoes[i].icone ?> <?= cartoes[i].nome ?><br><small class="text-muted">•••• <?= cartoes[i].ultimos ?></small>
+    </button>
+    </div>
+  <?}?>
+  </div>
+</div>
+<?}?>
+
+<div class="mb-2">
+  <label class="form-label fw-semibold mb-1">Valor (R$) *</label>
+  <input type="number" class="form-control" id="valor" placeholder="0,00" step="0.01" min="0.01" oninput="calcularParcelas()">
+</div>
+
+<div class="mb-2">
+  <label class="form-label fw-semibold mb-1">Descrição *</label>
+  <input type="text" class="form-control" id="desc" placeholder="Ex: Supermercado, Restaurante...">
+</div>
+
+<div class="mb-2">
+  <label class="form-label fw-semibold mb-1">Direção</label>
+  <div class="btn-group w-100">
+    <button type="button" class="btn btn-danger active" id="dir-saida" onclick="selDir('Saida')">⬇️ Saída</button>
+    <button type="button" class="btn btn-outline-success" id="dir-entrada" onclick="selDir('Entrada')">⬆️ Entrada</button>
+  </div>
+</div>
+
+<div class="mb-2">
+  <label class="form-label fw-semibold mb-1">Pagamento</label>
+  <div class="btn-group w-100 mb-1">
+    <button type="button" class="btn btn-outline-primary active" id="pag-avista" onclick="selPagamento('avista')">💳 À vista</button>
+    <button type="button" class="btn btn-outline-primary" id="pag-parcelado" onclick="selPagamento('parcelado')">📅 Parcelado</button>
+  </div>
+  <div id="bloco-parcelas" class="d-none">
+    <div class="mb-1">
+      <label class="form-label small fw-semibold mb-1">Nº de parcelas *</label>
+      <input type="number" class="form-control form-control-sm" id="num-parcelas" placeholder="12" min="2" max="48" value="12" oninput="calcularParcelas()">
+    </div>
+    <div class="alert alert-info p-2 small mb-0" id="preview-parcelas"></div>
+  </div>
+</div>
+
+<div class="mb-2">
+  <label class="form-label fw-semibold mb-1">Tipo de despesa</label>
+  <div class="btn-group w-100">
+    <button type="button" class="btn btn-primary active" id="tipo-DV" onclick="selTipo('DV')">DV</button>
+    <button type="button" class="btn btn-outline-primary" id="tipo-DF" onclick="selTipo('DF')">DF</button>
+    <button type="button" class="btn btn-outline-primary" id="tipo-NA" onclick="selTipo('NA')">NA</button>
+  </div>
+</div>
+
+<div class="d-grid mb-2">
+  <button type="button" class="btn fw-bold py-2" id="btn-enviar" onclick="enviar()"
+    style="background:linear-gradient(135deg,#6f42c1,#4f46e5);color:white;">
+    💳 Registrar Despesa
+  </button>
+</div>
+
+<div id="feedback" class="alert d-none"></div>
+
+<?} else {?>
+<body class="bg-light p-4 text-center">
+  <div style="font-size:3rem;">⛔</div>
+  <h4 class="text-danger mt-2">Link inválido</h4>
+  <p class="text-muted">Este link não é válido.<br>Solicite um novo ao administrador.</p>
+<?}?>
+
+<div class="mt-4" id="historico-wrap" style="display:none;">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span class="fw-semibold text-muted small">ÚLTIMOS REGISTROS</span>
+    <button class="btn btn-sm btn-outline-secondary" onclick="limparHistorico()">Limpar</button>
+  </div>
+  <div id="historico-lista"></div>
+</div>
+
+<script>
+var TIPO='DV', DIRECAO='Saida', CHAVE='<?= chave ?>';
+var PAGAMENTO = 'avista';
+
+function selPagamento(tipo) {
+  PAGAMENTO = tipo;
+  document.getElementById('pag-avista').className    = 'btn btn-outline-primary' + (tipo==='avista'?' active':'');
+  document.getElementById('pag-parcelado').className = 'btn btn-outline-primary' + (tipo==='parcelado'?' active':'');
+  document.getElementById('bloco-parcelas').classList.toggle('d-none', tipo!=='parcelado');
+  if (tipo==='parcelado') calcularParcelas();
+}
+
+function calcularParcelas() {
+  var total     = parseFloat(document.getElementById('valor').value) || 0;
+  var nparcelas = parseInt(document.getElementById('num-parcelas').value) || 0;
+  var preview   = document.getElementById('preview-parcelas');
+  if (!total || !nparcelas) { preview.textContent=''; return; }
+  var parcela = (total / nparcelas).toFixed(2).replace('.',',');
+  preview.textContent = nparcelas + 'x de R$ ' + parcela + ' = R$ ' + total.toFixed(2).replace('.',',');
+}
+<?if (acesso && cartoes.length === 1) {?>
+var CARTAO={codigo:'<?= cartoes[0].codigo ?>',nome:'<?= cartoes[0].nome ?>'};
+<?} else {?>
+var CARTAO=null;
+<?}?>
+
+function selCartao(idx, codigo, nome){
+  CARTAO={codigo:codigo, nome:nome};
+  var btns=document.querySelectorAll('[id^="btn-cartao-"]');
+  btns.forEach(function(b,i){
+    b.className='btn btn-sm w-100 text-start py-2 '+(i===idx?'btn-primary':'btn-outline-secondary');
+  });
+}
+
+function selDir(dir){
+  DIRECAO=dir;
+  document.getElementById('dir-saida').className='btn btn-lg '+(dir==='Saida'?'btn-danger active':'btn-outline-danger');
+  document.getElementById('dir-entrada').className='btn btn-lg '+(dir==='Entrada'?'btn-success active':'btn-outline-success');
+}
+
+function selTipo(t){
+  TIPO=t;
+  ['DV','DF','NA'].forEach(function(x){
+    document.getElementById('tipo-'+x).className='btn '+(x===t?'btn-primary':'btn-outline-primary');
+  });
+}
+
+var STORAGE_KEY = "historico_cartao";
+// Usar apenas memória de sessão (não persiste entre aberturas — evita confusão)
+var HISTORICO = [];
+
+function fb(msg,tipo){
+  var el=document.getElementById('feedback');
+  el.innerHTML=msg;
+  el.className='alert alert-'+(tipo==='ok'?'success':'danger');
+  if(tipo==='ok') setTimeout(function(){el.className='alert d-none';limpar();},2000);
+}
+
+function adicionarHistorico(desc, valor, direcao, tipo, nparcelas) {
+  var agora = new Date();
+  var hora = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+  var entrada = direcao==='Entrada';
+  HISTORICO.unshift({ desc:desc, valor:valor, entrada:entrada, tipo:tipo, hora:hora, nparcelas:nparcelas||1 });
+  if(HISTORICO.length > 8) HISTORICO.pop();
+  renderHistorico();
+}
+
+function renderHistorico() {
+  var wrap = document.getElementById('historico-wrap');
+  var lista = document.getElementById('historico-lista');
+  if(!HISTORICO.length) { wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  lista.innerHTML = HISTORICO.map(function(r) {
+    var cor = r.entrada ? 'success' : 'danger';
+    var sinal = r.entrada ? '+' : '-';
+    var parcelInfo = r.nparcelas > 1 ? ' · ' + r.nparcelas + 'x' : '';
+    return '<div class="d-flex align-items-center gap-2 p-2 mb-1 bg-white rounded border">' +
+      '<span class="badge bg-'+cor+' fs-6">'+(r.entrada?'⬆':'⬇')+'</span>' +
+      '<div class="flex-grow-1"><div class="fw-semibold" style="font-size:0.9rem;">'+r.desc+'</div>' +
+      '<div class="text-muted" style="font-size:0.78rem;">'+r.tipo+parcelInfo+' · '+r.hora+'</div></div>' +
+      '<span class="fw-bold text-'+cor+'" style="font-size:0.9rem;white-space:nowrap;">'+sinal+'R$ '+r.valor.toFixed(2).replace('.',',')+'</span>' +
+      '</div>';
+  }).join('');
+}
+
+function limparHistorico() {
+  HISTORICO=[];
+  document.getElementById('historico-wrap').style.display='none';
+}
+
+function limpar(){
+  document.getElementById('valor').value='';
+  document.getElementById('desc').value='';
+  TIPO='DV'; DIRECAO='Saida';
+  selDir('Saida'); selTipo('DV');
+  <?if (acesso && cartoes.length === 1) {?>
+  CARTAO={codigo:'<?= cartoes[0].codigo ?>',nome:'<?= cartoes[0].nome ?>'};
+  <?} else if (acesso && cartoes.length > 1) {?>
+  CARTAO=null;
+  document.querySelectorAll('[id^="btn-cartao-"]').forEach(function(b){
+    b.className=b.className.replace('btn-primary','btn-outline-secondary');
+  });
+  <?}?>
+}
+
+function enviar(){
+  var valor=parseFloat(document.getElementById('valor').value);
+  var desc=document.getElementById('desc').value.trim();
+  if(!CARTAO){fb('Selecione o cartao.','erro');return;}
+  if(!valor||valor<=0){fb('Informe um valor valido.','erro');return;}
+  if(PAGAMENTO==='parcelado') {
+    var nparcelas = parseInt(document.getElementById('num-parcelas').value)||0;
+    if(!nparcelas||nparcelas<2){fb('Informe o numero de parcelas (minimo 2).','erro');return;}
+  }
+  if(!desc){fb('Informe a descricao.','erro');return;}
+
+  var parcelado   = PAGAMENTO === 'parcelado';
+  var numParcelas = parcelado ? (parseInt(document.getElementById('num-parcelas').value) || 1) : 1;
+
+  var btn=document.getElementById('btn-enviar');
+  btn.disabled=true; btn.textContent='⏳ Registrando...';
+
+  var dados = {
+    valor:       valor,
+    descricao:   desc,
+    cartao:      CARTAO.codigo,
+    nomeCartao:  CARTAO.nome,
+    tipo:        TIPO,
+    direcao:     DIRECAO,
+    chave:       CHAVE,
+    parcelado:   parcelado,
+    numParcelas: numParcelas
+  };
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res&&res.ok){
+        var nRec = res.registros || 1;
+        var s = DIRECAO==='Entrada'?'+':'-';
+        var msg = nRec > 1
+          ? '✅ <strong>'+CARTAO.nome+'</strong><br>'+desc+'<br>'+nRec+'x de '+s+'R$ '+(valor/nRec).toFixed(2).replace('.',',')
+          : '✅ <strong>'+CARTAO.nome+'</strong><br>'+desc+'<br>'+s+'R$ '+valor.toFixed(2).replace('.',',');
+        adicionarHistorico(desc, parcelado ? valor/numParcelas : valor, DIRECAO, TIPO, parcelado ? numParcelas : 1);
+        fb(msg,'ok');
+        if(parcelado) { selPagamento('avista'); document.getElementById('num-parcelas').value='12'; }
+        // Bloquear botão 3s para evitar duplo registro
+        btn.textContent='✅ Registrado!';
+        btn.style.background='#15803d';
+        setTimeout(function(){
+          btn.disabled=false;
+          btn.textContent='💳 Registrar Despesa';
+          btn.style.background='';
+        }, 3000);
+      } else {
+        btn.disabled=false; btn.textContent='💳 Registrar Despesa';
+        fb('❌ '+(res?res.erro:'Erro'),'erro');
+      }
+    })
+    .withFailureHandler(function(err){
+      btn.disabled=false; btn.textContent='💳 Registrar Despesa';
+      fb('❌ '+err.message,'erro');
+    })
+    .registrarCartao(dados);
+}
+// Exibir histórico salvo ao carregar
+window.addEventListener('DOMContentLoaded', function() { renderHistorico(); });
+</script>
+</body>
+</html>
+
