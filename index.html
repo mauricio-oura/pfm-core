@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Financeiro — Rápido</title>
+<style>
+  :root {
+    --cor-positivo: #16a34a;
+    --cor-negativo: #dc2626;
+    --cor-neutro: #64748b;
+    --cor-fundo: #f8fafc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--cor-fundo);
+    margin: 0;
+    padding: 16px;
+    color: #1e293b;
+  }
+  .container { max-width: 480px; margin: 0 auto; }
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 1.1rem; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+  .hero {
+    background: linear-gradient(135deg, #1e3a5f, #0f172a);
+    color: white;
+  }
+  .hero-label { font-size: 0.68rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.05em; }
+  .hero-valor { font-size: 1.8rem; font-weight: 800; margin-top: 2px; }
+  .hero-badge {
+    display: inline-block; margin-top: 6px; font-size: 0.7rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .hero-frase {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.12);
+    font-size: 0.8rem; color: #cbd5e1; line-height: 1.5;
+  }
+  .score-linha { display: flex; align-items: baseline; gap: 10px; }
+  .score-valor { font-size: 1.4rem; font-weight: 800; }
+  .cat-item {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;
+  }
+  .cat-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cat-nome { flex: 1; font-size: 0.85rem; }
+  .cat-valor { font-size: 0.85rem; font-weight: 700; }
+  input[type=password], input[type=text] {
+    width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px;
+    font-size: 1rem; margin-bottom: 10px;
+  }
+  button {
+    background: #2563eb; color: white; border: none; border-radius: 8px;
+    padding: 10px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; width: 100%;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  button.secundario { background: #f1f5f9; color: #334155; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .info-atualizacao { font-size: 0.7rem; color: var(--cor-neutro); }
+  .btn-atualizar { width: auto; padding: 6px 12px; font-size: 0.75rem; }
+  .erro { color: var(--cor-negativo); font-size: 0.85rem; margin-top: 8px; }
+  .oculto { display: none; }
+  .carregando { text-align: center; color: var(--cor-neutro); padding: 30px 0; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div id="tela-pin" class="card">
+    <h1>🔒 Painel Financeiro</h1>
+    <p style="font-size:0.85rem;color:var(--cor-neutro);margin-top:-8px;">Digite o PIN pra ver o resumo.</p>
+    <input type="password" id="input-pin" placeholder="PIN" inputmode="numeric" autofocus>
+    <button onclick="tentarAbrir()">Entrar</button>
+    <div id="erro-pin" class="erro oculto"></div>
+  </div>
+
+  <div id="tela-dashboard" class="oculto">
+    <div class="top-bar">
+      <span class="info-atualizacao" id="info-atualizacao">—</span>
+      <button class="btn-atualizar" onclick="atualizar()" id="btn-atualizar">🔄 Atualizar</button>
+    </div>
+
+    <div class="card hero">
+      <div class="hero-label" id="hero-mes">SALDO REALISTA</div>
+      <div class="hero-valor" id="hero-valor">—</div>
+      <div class="hero-badge" id="hero-badge"></div>
+      <div class="hero-frase" id="hero-frase"></div>
+    </div>
+
+    <div class="card">
+      <h1>🏆 Score de Saúde Financeira</h1>
+      <div class="score-linha">
+        <span class="score-valor" id="score-valor">—</span>
+        <span id="score-selo" style="font-size:0.8rem;font-weight:700;padding:3px 10px;border-radius:20px;"></span>
+      </div>
+      <div style="font-size:0.72rem;color:var(--cor-neutro);margin-top:6px;" id="score-detalhe"></div>
+    </div>
+
+    <div class="card">
+      <h1>📊 Top Categorias do Mês (DV)</h1>
+      <div id="lista-categorias"></div>
+    </div>
+
+    <div style="text-align:center;">
+      <button class="secundario" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div id="tela-carregando" class="carregando oculto">Carregando...</div>
+
+</div>
+
+<script>
+// URL do Web App do Apps Script (confirme que bate com a implantação ativa que você usa)
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvMZTxpoJsm5S5vcyYOOIlpKU_DJQ3deFhEDqKVu3vpBmGlbCVGYMFE0I6vwXGkcVe/exec';
+var PUBLICAR_SECRET = 'wKL_xjXCfIRIl2jVeusUD45ksukjgrZ12DzRJeLX0kA'; // deve bater com a Propriedade do script PUBLICAR_SECRET
+var ARQUIVO_JSON = 'dashboard-data.json';
+
+var _pinAtual = '';
+var _payloadAtual = null;
+
+function moeda(v) {
+  v = Number(v) || 0;
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+// ── Criptografia (espelha exatamente o esquema do Apps Script: criptografia.js) ──
+// AES-256-CTR (cifra) + PBKDF2-HMAC-SHA256, 100.000 iterações (deriva a chave do
+// PIN) + HMAC-SHA256 separado (autentica) — tudo via Web Crypto API nativa do
+// navegador, sem nenhuma biblioteca externa.
+
+var SALT_DASHBOARD = new TextEncoder().encode('painel-financeiro-dashboard-salt-v1');
+
+async function derivarChaves(pin) {
+  var pinBytes = new TextEncoder().encode(String(pin));
+  var chaveBase = await crypto.subtle.importKey('raw', pinBytes, { name: 'PBKDF2' }, false, ['deriveBits']);
+  var bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: SALT_DASHBOARD, iterations: 100000 },
+    chaveBase, 64 * 8 // 64 bytes = 2 chaves de 32 (cifra + autenticação)
+  );
+  var todosBytes = new Uint8Array(bits);
+  return { chaveCifra: todosBytes.slice(0, 32), chaveAuth: todosBytes.slice(32, 64) };
+}
+
+function base64ParaBytes(b64) {
+  var bin = atob(b64);
+  var bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function bytesParaBase64(bytes) {
+  var bin = '';
+  for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function concatBytes(a, b) {
+  var r = new Uint8Array(a.length + b.length);
+  r.set(a, 0); r.set(b, a.length);
+  return r;
+}
+
+// Descriptografa o envelope { iv, dados, tag } com o PIN informado.
+// Lança erro se o PIN estiver errado ou o dado estiver corrompido (tag não bate).
+async function descriptografarComPin(envelope, pin) {
+  var chaves = await derivarChaves(pin);
+  var ivBytes = base64ParaBytes(envelope.iv);
+  var cifradoBytes = base64ParaBytes(envelope.dados);
+
+  // Verifica a tag de autenticação (HMAC sobre iv+cifrado) antes de aceitar o resultado
+  var chaveAuthCrypto = await crypto.subtle.importKey('raw', chaves.chaveAuth, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  var ivMaisCifrado = concatBytes(ivBytes, cifradoBytes);
+  var tagCalculadaBuf = await crypto.subtle.sign('HMAC', chaveAuthCrypto, ivMaisCifrado);
+  if (bytesParaBase64(new Uint8Array(tagCalculadaBuf)) !== envelope.tag) {
+    throw new Error('PIN incorreto.');
+  }
+
+  // Decifra com AES-256-CTR (o "iv" de 16 bytes é usado como contador de 128 bits inteiro)
+  var chaveCifraCrypto = await crypto.subtle.importKey('raw', chaves.chaveCifra, { name: 'AES-CTR' }, false, ['decrypt']);
+  var textoBuf = await crypto.subtle.decrypt({ name: 'AES-CTR', counter: ivBytes, length: 128 }, chaveCifraCrypto, cifradoBytes);
+  return new TextDecoder().decode(textoBuf);
+}
+
+// ── Fluxo da página ──
+
+function mostrarErroPin(msg) {
+  var el = document.getElementById('erro-pin');
+  el.textContent = msg;
+  el.classList.remove('oculto');
+}
+
+async function tentarAbrir() {
+  var pin = document.getElementById('input-pin').value.trim();
+  if (!pin) return;
+  document.getElementById('erro-pin').classList.add('oculto');
+  document.getElementById('tela-pin').classList.add('oculto');
+  document.getElementById('tela-carregando').classList.remove('oculto');
+
+  try {
+    var envelope = await buscarEnvelope();
+    var jsonStr = await descriptografarComPin(envelope, pin);
+    _pinAtual = pin;
+    _payloadAtual = JSON.parse(jsonStr);
+    document.getElementById('tela-carregando').classList.add('oculto');
+    document.getElementById('tela-dashboard').classList.remove('oculto');
+    renderizar(_payloadAtual, envelope.geradoEm);
+  } catch (err) {
+    document.getElementById('tela-carregando').classList.add('oculto');
+    document.getElementById('tela-pin').classList.remove('oculto');
+    mostrarErroPin(err.message === 'PIN incorreto.' ? '❌ PIN incorreto.' : '❌ Erro ao carregar: ' + err.message);
+  }
+}
+
+async function buscarEnvelope() {
+  var resp = await fetch(ARQUIVO_JSON + '?t=' + Date.now()); // cache-busting
+  if (!resp.ok) throw new Error('Arquivo de dados não encontrado (ainda não foi publicado?).');
+  return resp.json();
+}
+
+async function atualizar() {
+  var btn = document.getElementById('btn-atualizar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Atualizando...';
+  try {
+    var url = APPS_SCRIPT_URL + '?page=publicar-dashboard&secret=' + encodeURIComponent(PUBLICAR_SECRET);
+    var resp = await fetch(url);
+    var resultado = await resp.json();
+    if (resultado.erro) throw new Error(resultado.erro);
+
+    var envelope = await buscarEnvelope();
+    var jsonStr = await descriptografarComPin(envelope, _pinAtual);
+    _payloadAtual = JSON.parse(jsonStr);
+    renderizar(_payloadAtual, envelope.geradoEm);
+  } catch (err) {
+    alert('Erro ao atualizar: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 Atualizar';
+  }
+}
+
+function sair() {
+  _pinAtual = ''; _payloadAtual = null;
+  document.getElementById('input-pin').value = '';
+  document.getElementById('tela-dashboard').classList.add('oculto');
+  document.getElementById('tela-pin').classList.remove('oculto');
+}
+
+// ── Renderização ──
+
+var CORES_CATEGORIA = ['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16'];
+
+function renderizar(payload, geradoEm) {
+  document.getElementById('info-atualizacao').textContent = 'Gerado em ' + new Date(geradoEm).toLocaleString('pt-BR');
+
+  var uni = payload.unificado || {};
+  var mes0 = (uni.meses && uni.meses[0]) || {};
+  var hibrido = mes0.hibrido || 0;
+  var fluxo = mes0.fluxo || 0;
+  var gastoExtra = mes0.dvEstimada || 0;
+
+  document.getElementById('hero-mes').textContent = 'SALDO REALISTA — ' + (mes0.mes || '').toUpperCase();
+  var elValor = document.getElementById('hero-valor');
+  elValor.textContent = moeda(hibrido);
+  elValor.style.color = hibrido >= 0 ? '#ffffff' : '#fca5a5';
+
+  var elBadge = document.getElementById('hero-badge');
+  if (hibrido >= 0) {
+    elBadge.textContent = '✓ Positivo';
+    elBadge.style.background = 'rgba(34,197,94,0.18)'; elBadge.style.color = '#4ade80';
+  } else {
+    elBadge.textContent = '⚠️ Negativo';
+    elBadge.style.background = 'rgba(220,38,38,0.18)'; elBadge.style.color = '#fca5a5';
+  }
+
+  var frase;
+  if (hibrido >= 0 && fluxo >= 0) {
+    frase = 'Você tem <strong>' + moeda(fluxo) + '</strong> (positivo) já lançado nas contas este mês. Mesmo considerando o gasto extra ainda esperado de <strong>' + moeda(gastoExtra) + '</strong>, o saldo continua positivo.';
+  } else if (hibrido < 0 && fluxo >= 0) {
+    frase = 'Você tem <strong>' + moeda(fluxo) + '</strong> (positivo) já lançado nas contas este mês. Mas considerando o gasto extra ainda esperado de <strong>' + moeda(gastoExtra) + '</strong>, o saldo fica negativo.';
+  } else {
+    frase = 'Você tem <strong>' + moeda(fluxo) + '</strong> (negativo) já lançado nas contas este mês.';
+  }
+  document.getElementById('hero-frase').innerHTML = frase;
+
+  // Score (já vem calculado do backend, com os mesmos pesos configurados na aba "config")
+  var dash = payload.dashboard || {};
+  var score = dash.score;
+
+  if (score && score.scoreMax > 0) {
+    var scorePct = (score.scoreTotal / score.scoreMax * 100);
+    var cor, selo;
+    if (scorePct >= 80) { cor = '#16a34a'; selo = '🟢 Ótima'; }
+    else if (scorePct >= 50) { cor = '#d97706'; selo = '🟡 Atenção'; }
+    else { cor = '#dc2626'; selo = '🔴 Crítica'; }
+    var elScoreValor = document.getElementById('score-valor');
+    elScoreValor.textContent = score.scoreTotal + '/' + score.scoreMax;
+    elScoreValor.style.color = cor;
+    var elSelo = document.getElementById('score-selo');
+    elSelo.textContent = selo;
+    elSelo.style.background = cor + '22'; elSelo.style.color = cor;
+  } else {
+    document.getElementById('score-valor').textContent = 'indisponível';
+  }
+
+  // Top categorias do mês
+  var cats = payload.categorias || {};
+  var itens = (cats.atual && cats.atual.itens) || [];
+  var wrap = document.getElementById('lista-categorias');
+  if (!itens.length) {
+    wrap.innerHTML = '<p style="color:var(--cor-neutro);font-size:0.85rem;">Sem dados de categoria ainda este mês.</p>';
+  } else {
+    wrap.innerHTML = itens.slice(0, 8).map(function(it, i) {
+      var cor = CORES_CATEGORIA[i % CORES_CATEGORIA.length];
+      return '<div class="cat-item">' +
+        '<span class="cat-dot" style="background:' + cor + ';"></span>' +
+        '<span class="cat-nome">' + it.categoria + '</span>' +
+        '<span class="cat-valor">' + moeda(it.valor) + '</span>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+document.getElementById('input-pin').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') tentarAbrir();
+});
+</script>
+</body>
+</html>
