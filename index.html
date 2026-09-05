@@ -125,6 +125,7 @@ var ARQUIVO_JSON = 'dashboard-data.json';
 
 var _pinAtual = '';
 var _payloadAtual = null;
+var _envelopeAtual = null;
 
 function moeda(v) {
   v = Number(v) || 0;
@@ -209,6 +210,7 @@ async function tentarAbrir() {
     var jsonStr = await descriptografarComPin(envelope, pin);
     _pinAtual = pin;
     _payloadAtual = JSON.parse(jsonStr);
+    _envelopeAtual = envelope;
     document.getElementById('tela-carregando').classList.add('oculto');
     document.getElementById('tela-dashboard').classList.remove('oculto');
     renderizar(_payloadAtual, envelope.geradoEm);
@@ -230,14 +232,17 @@ async function atualizar() {
   btn.disabled = true;
   btn.textContent = '⏳ Atualizando...';
   try {
+    // O Apps Script não manda cabeçalho de CORS, então o navegador não deixa o JS
+    // LER a resposta de um fetch cross-origin — "Failed to fetch". O jeito é disparar
+    // a chamada sem tentar ler nada (no-cors) e depois checar se o arquivo mudou.
+    var geradoEmAntes = _envelopeAtual ? _envelopeAtual.geradoEm : null;
     var url = APPS_SCRIPT_URL + '?page=publicar-dashboard&secret=' + encodeURIComponent(PUBLICAR_SECRET);
-    var resp = await fetch(url);
-    var resultado = await resp.json();
-    if (resultado.erro) throw new Error(resultado.erro);
+    fetch(url, { mode: 'no-cors' }).catch(function() {}); // dispara e ignora — não dá pra ler a resposta mesmo
 
-    var envelope = await buscarEnvelope();
+    var envelope = await aguardarArquivoAtualizado(geradoEmAntes, 20000);
     var jsonStr = await descriptografarComPin(envelope, _pinAtual);
     _payloadAtual = JSON.parse(jsonStr);
+    _envelopeAtual = envelope;
     renderizar(_payloadAtual, envelope.geradoEm);
   } catch (err) {
     alert('Erro ao atualizar: ' + err.message);
@@ -245,6 +250,21 @@ async function atualizar() {
     btn.disabled = false;
     btn.textContent = '🔄 Atualizar';
   }
+}
+
+// Fica rebuscando o arquivo (com cache-busting) até a data de geração mudar,
+// ou até estourar o tempo limite — já que não dá pra saber diretamente quando
+// o Apps Script terminou de publicar (ver comentário em atualizar()).
+async function aguardarArquivoAtualizado(geradoEmAntes, timeoutMs) {
+  var inicio = Date.now();
+  while (Date.now() - inicio < timeoutMs) {
+    await new Promise(function(r) { setTimeout(r, 1500); });
+    try {
+      var envelope = await buscarEnvelope();
+      if (!geradoEmAntes || envelope.geradoEm !== geradoEmAntes) return envelope;
+    } catch (e) { /* arquivo pode não existir ainda na primeiríssima publicação — ignora e tenta de novo */ }
+  }
+  throw new Error('Demorou demais pra confirmar a atualização. O Apps Script pode ainda estar processando — tente recarregar a página em alguns segundos.');
 }
 
 function sair() {
