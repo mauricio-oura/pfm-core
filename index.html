@@ -239,7 +239,7 @@ async function atualizar() {
     var url = APPS_SCRIPT_URL + '?page=publicar-dashboard&secret=' + encodeURIComponent(PUBLICAR_SECRET);
     fetch(url, { mode: 'no-cors' }).catch(function() {}); // dispara e ignora — não dá pra ler a resposta mesmo
 
-    var envelope = await aguardarArquivoAtualizado(geradoEmAntes, 20000);
+    var envelope = await aguardarArquivoAtualizado(geradoEmAntes, 60000);
     var jsonStr = await descriptografarComPin(envelope, _pinAtual);
     _payloadAtual = JSON.parse(jsonStr);
     _envelopeAtual = envelope;
@@ -254,17 +254,20 @@ async function atualizar() {
 
 // Fica rebuscando o arquivo (com cache-busting) até a data de geração mudar,
 // ou até estourar o tempo limite — já que não dá pra saber diretamente quando
-// o Apps Script terminou de publicar (ver comentário em atualizar()).
+// o Apps Script terminou de publicar (ver comentário em atualizar()). O GitHub
+// pode levar bem mais que alguns segundos pra propagar o commit até aqui.
 async function aguardarArquivoAtualizado(geradoEmAntes, timeoutMs) {
   var inicio = Date.now();
+  var btn = document.getElementById('btn-atualizar');
   while (Date.now() - inicio < timeoutMs) {
+    if (btn) btn.textContent = '⏳ Atualizando... (' + Math.round((Date.now() - inicio) / 1000) + 's)';
     await new Promise(function(r) { setTimeout(r, 1500); });
     try {
       var envelope = await buscarEnvelope();
       if (!geradoEmAntes || envelope.geradoEm !== geradoEmAntes) return envelope;
     } catch (e) { /* arquivo pode não existir ainda na primeiríssima publicação — ignora e tenta de novo */ }
   }
-  throw new Error('Demorou demais pra confirmar a atualização. O Apps Script pode ainda estar processando — tente recarregar a página em alguns segundos.');
+  throw new Error('O pedido foi enviado, mas o GitHub ainda não mostrou o resultado novo depois de 1 minuto de espera. Isso costuma ser só demora de propagação, não erro — espera mais um pouco e clica em "Atualizar" de novo.');
 }
 
 function sair() {
